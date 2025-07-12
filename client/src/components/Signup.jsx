@@ -3,7 +3,7 @@ import plantImage from '../assets/plants.png';
 import { ArrowLeft } from 'lucide-react';
 import googleIcon from '../assets/google.png';
 import appleIcon from '../assets/apple.png';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Axios from 'axios';
 
 const Signup = () => {
@@ -38,18 +38,22 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
-      <div className="w-1/2 flex items-center justify-end pr-10 bg-white z-0">
-        <div className="w-full max-w-md relative">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center text-gray-700 hover:text-black mb-20"
-          >
-            <ArrowLeft className="mr-1" size={20} />
-          </button>
+    <div className="flex flex-col md:flex-row w-full h-screen">
+      <div className="w-full md:w-1/2 flex justify-center items-center bg-white px-6 py-8">
+        <div className="w-full max-w-sm">
+          <div className="relative mb-6 flex items-center justify-center">
+  {/* Back Arrow */}
+  <button
+    onClick={() => navigate(-1)}
+    className="absolute left-0 text-gray-700 hover:text-black flex items-center"
+  >
+    <ArrowLeft size={26} />
+  </button>
 
-          <h2 className="text-3xl font-bold mb-2">Get Started Now</h2>
-          <p className="text-sm text-gray-600 mb-6 font-bold">
+</div>
+
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2">Get Started Now</h2>
+          <p className="text-sm font-bold text-gray-600 mb-4">
             Enter your credentials to create a new account
           </p>
 
@@ -92,43 +96,43 @@ const Signup = () => {
           </label>
 
           <button
-            className="bg-green-700 text-white w-full py-2 rounded hover:bg-green-800 font-semibold"
+            className="bg-green-700 text-white w-full py-2 rounded hover:bg-green-800 mb-3 font-semibold"
             onClick={createUser}
           >
             Sign Up
           </button>
 
-          <div className="flex items-center my-4">
+          <div className="flex items-center my-3">
             <hr className="flex-grow border-gray-300" />
             <span className="px-3 text-gray-500">or</span>
             <hr className="flex-grow border-gray-300" />
           </div>
 
-          <div className="flex gap-2 mb-4 font-bold">
-            <button className="border px-4 py-2 rounded flex-1 flex items-center justify-center gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 mb-2 font-bold">
+            <button className="w-full py-2 rounded border flex items-center justify-center gap-2">
               <img src={googleIcon} alt="Google" className="w-5 h-5" />
-              Google
+              Signup with Google
             </button>
-            <button className="border px-4 py-2 rounded flex-1 flex items-center justify-center gap-2">
+            <button className="w-full py-2 rounded border flex items-center justify-center gap-2">
               <img src={appleIcon} alt="Apple" className="w-5 h-5" />
-              Apple
+              Signup with Apple
             </button>
           </div>
 
-          <p className="text-sm text-center font-bold">
+          <p className="text-sm font-bold text-center mt-2">
             Already have an account?{' '}
-            <a className="text-blue-600" href="/login">
+            <Link to="/login" className="text-blue-600 font-bold">
               Login
-            </a>
+            </Link>
           </p>
         </div>
       </div>
 
-      <div className="flex-1 p-4 flex items-center justify-end">
+      <div className="hidden md:flex w-1/2 items-center justify-end p-4">
         <img
           src={plantImage}
           alt="plant"
-          className="h-full object-contain rounded-tl-lg rounded-bl-lg"
+          className="w-full h-full object-cover rounded-xl"
         />
       </div>
     </div>

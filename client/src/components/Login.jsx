@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import plantImage from '../assets/plants.png';
 import { ArrowLeft } from 'lucide-react';
 import googleIcon from '../assets/google.png';
@@ -46,100 +46,109 @@ const Login = () => {
   }, [loginError]);
 
   return (
-    <div className="min-h-screen flex">
-      <div className="w-1/2 flex items-center justify-end pr-10 bg-white z-0">
-        <div className="w-full max-w-md">
-          <div className="flex items-center mb-20 ml-[-5] mt-2 gap-40">
-            <button
-              onClick={() => navigate(-1)}
-              className="text-gray-700 hover:text-black flex items-center"
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <div className="bg-black text-white rounded-[10px] px-2 py-1 text-lg">Logo</div>
-          </div>
-
-          <h2 className="text-3xl font-bold mb-2">Welcome!</h2>
-          <p className="text-sm font-bold text-gray-600 mb-6">
-            Enter your credentials to access your account
-          </p>
-
-          {/* Error Message */}
-          {loginError && (
-            <div className="bg-red-500 text-white px-4 py-2 rounded mb-4 font-bold text-center">
-              {loginError}
-            </div>
-          )}
-
-          <label className="block font-bold text-sm text-gray-700 mb-1">Email address</label>
-          <input
-            type="email"
-            value={loginemail}
-            placeholder="Enter your email"
-            onChange={(e) => setloginEmail(e.target.value)}
-            className="w-full border rounded px-3 py-2 mb-4"
-          />
-
-          <div className="flex justify-between items-end mb-1">
-            <label className="block text-sm text-gray-700 font-bold">Password</label>
-            <a href="#" className="text-sm text-blue-600 font-bold">Forgot password?</a>
-          </div>
-          <input
-            type="password"
-            value={loginpassword}
-            placeholder="Enter your password"
-            onChange={(e) => setloginPassword(e.target.value)}
-            className="w-full border rounded px-3 py-2 mb-4"
-          />
-
-          <div className="flex justify-between items-center text-sm mb-4">
-            <label className="font-bold">
-              <input type="checkbox" className="mr-1" /> Remember for 30 days
-            </label>
-          </div>
-
-          <button
-            className="bg-green-700 text-white w-full py-2 rounded hover:bg-green-800 mb-4 font-bold"
-            onClick={loginUser}
-          >
-            Login
-          </button>
-
-          <div className="flex items-center my-4">
-            <hr className="flex-grow border-gray-300" />
-            <span className="px-3 text-gray-500 font-bold">or</span>
-            <hr className="flex-grow border-gray-300" />
-          </div>
-
-          <div className="flex gap-2 mb-4">
-            <button className="border px-4 py-2 rounded flex-1 flex items-center justify-center gap-2 font-bold">
-              <img src={googleIcon} alt="Google" className="w-5 h-5" />
-              Sign in with Google
-            </button>
-            <button className="border px-4 py-2 rounded flex-1 flex items-center justify-center gap-2 font-bold">
-              <img src={appleIcon} alt="Apple" className="w-5 h-5" />
-              Sign in with Apple
-            </button>
-          </div>
-
-          <p className="text-sm font-bold text-center">
-            Don’t have an account?{' '}
-            <a className="text-blue-600 font-bold" href="/signup">
-              Sign Up
-            </a>
-          </p>
+  <div className="flex flex-col md:flex-row w-full h-screen">
+    {/* Left Section */}
+    <div className="w-full md:w-1/2 flex justify-center items-center bg-white px-6 py-8">
+      <div className="w-full max-w-sm">
+        {/* Top Row */}
+        <div className="relative mb-6 flex items-center justify-center">
+         <button
+             onClick={() => navigate(-1)}
+             className="absolute left-0 text-gray-700 hover:text-black flex items-center"
+           >
+             <ArrowLeft size={26} />
+           </button>
+         
+           {/* Centered Logo */}
+           <div className="bg-black text-white rounded-[10px] px-4 py-2 text-lg font-bold">
+             Logo
+           </div>
         </div>
-      </div>
 
-      <div className="flex-1 p-4 flex items-center justify-end">
-        <img
-          src={plantImage}
-          alt="plant"
-          className="h-full object-contain rounded-tl-lg rounded-bl-lg"
+        <h2 className="text-2xl sm:text-3xl font-bold mb-2">Welcome!</h2>
+        <p className="text-sm font-bold text-gray-600 mb-4">
+          Enter your credentials to access your account
+        </p>
+
+        {loginError && (
+          <div className="bg-red-500 text-white px-4 py-2 rounded mb-4 font-bold text-center">
+            {loginError}
+          </div>
+        )}
+
+        <label className="block font-bold text-sm text-gray-700 mb-1">Email address</label>
+        <input
+          type="email"
+          value={loginemail}
+          placeholder="Enter your email"
+          onChange={(e) => setloginEmail(e.target.value)}
+          className="w-full border rounded px-3 py-2 mb-3"
         />
+
+        <div className="flex justify-between items-end mb-1">
+          <label className="block text-sm text-gray-700 font-bold">Password</label>
+          <a href="#" className="text-sm text-blue-600 font-bold">Forgot password?</a>
+        </div>
+        <input
+          type="password"
+          value={loginpassword}
+          placeholder="Enter your password"
+          onChange={(e) => setloginPassword(e.target.value)}
+          className="w-full border rounded px-3 py-2 mb-3"
+        />
+
+        <div className="flex items-center text-sm mb-4">
+          <label className="font-bold">
+            <input type="checkbox" className="mr-1" /> Remember for 30 days
+          </label>
+        </div>
+
+        <button
+          className="bg-green-700 text-white w-full py-2 rounded hover:bg-green-800 mb-3 font-bold"
+          onClick={loginUser}
+        >
+          Login
+        </button>
+
+        <div className="flex items-center my-3">
+          <hr className="flex-grow border-gray-300" />
+          <span className="px-3 text-gray-500 font-bold">or</span>
+          <hr className="flex-grow border-gray-300" />
+        </div>
+
+        {/* Google and Apple Buttons - stacked on mobile, side by side on md+ */}
+        <div className="flex flex-col sm:flex-row gap-2 mb-2 font-bold">
+          <button className="w-full py-2 rounded border flex items-center justify-center gap-2">
+            <img src={googleIcon} alt="Google" className="w-5 h-5" />
+            Signup with Google
+          </button>
+          <button className="w-full py-2 rounded border flex items-center justify-center gap-2">
+            <img src={appleIcon} alt="Apple" className="w-5 h-5" />
+            Signup with Apple
+          </button>
+        </div>
+
+        <p className="text-sm font-bold text-center mt-2">
+          Don’t have an account?{' '}
+          <Link to="/signup" className="text-blue-600 font-bold">
+              Sign Up
+            </Link>
+        </p>
       </div>
     </div>
-  );
+
+    {/* Right Section: Hidden on small devices */}
+    <div className="hidden md:flex w-1/2 items-center justify-end p-4">
+      <img
+        src={plantImage}
+        alt="plant"
+        className="w-full h-full object-cover rounded-xl"
+      />
+    </div>
+  </div>
+);
+
+
 };
 
 export default Login;
