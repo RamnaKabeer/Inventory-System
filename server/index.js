@@ -4,51 +4,43 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./db'); // Import DB connection
+const importExcelRoute = require('./routes/importExcelRoute'); // Make sure this file exists
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
 
-// Start server
-app.listen(3002, () => {
-  console.log('Server is running on port 3002');
-});
+// Routes
 
-// Signup Route
+// ✅ Signup Route
 app.post('/signup', (req, res) => {
-  const sentEmail = req.body.Email;
-  const sentName = req.body.Name;
-  const sentPassword = req.body.Password;
-
+  const { Email, Name, Password } = req.body;
   const SQL = 'INSERT INTO users (email, name, password) VALUES (?, ?, ?)';
-  const Values = [sentEmail, sentName, sentPassword];
+  const Values = [Email, Name, Password];
 
   db.query(SQL, Values, (err, results) => {
-    if (err) {
-      res.send(err);
-    } else {
-      console.log('User inserted successfully!');
-      res.send({ message: 'User added!' });
-    }
+    if (err) return res.send(err);
+    console.log('✅ User inserted successfully!');
+    res.send({ message: 'User added!' });
   });
 });
 
-// Login Route
+// ✅ Login Route
 app.post('/login', (req, res) => {
-  const sentloginEmail = req.body.LoginEmail;
-  const sentloginPassword = req.body.LoginPassword;
-
+  const { LoginEmail, LoginPassword } = req.body;
   const SQL = 'SELECT * FROM users WHERE Email = ? AND password = ?';
-  const Values = [sentloginEmail, sentloginPassword];
+  const Values = [LoginEmail, LoginPassword];
 
   db.query(SQL, Values, (err, results) => {
-    if (err) {
-      res.send({ error: err });
-    } else if (results.length > 0) {
-      res.send(results);
-    } else {
-      res.send({ message: `Credentials Don't match!` });
-    }
+    if (err) return res.send({ error: err });
+    if (results.length > 0) return res.send(results);
+    res.send({ message: `Credentials don't match!` });
   });
 });
+
+// ✅ Excel Upload Route
+app.use('/', importExcelRoute);
+
+// ✅ Start server (Only ONE listen call)
+app.listen(3002, () => console.log('🚀 Server running on port 3002'));

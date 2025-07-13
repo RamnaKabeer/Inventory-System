@@ -4,6 +4,7 @@ import Signup from './components/Signup';
 import Sidebar from './components/sidebar';
 import Header from './components/header';
 import Dashboard from './components/dashboard';
+import FileUpload from './components/FileUpload'; // path adjust karo
 
 function DashboardLayout() {
   return (
@@ -32,6 +33,8 @@ function App() {
 
         {/* Protected dashboard layout */}
         <Route path="/dashboard" element={<DashboardLayout />} />
+        <Route path="/FileUpload" element={<FileUpload />} />
+
       </Routes>
     </Router>
   );
