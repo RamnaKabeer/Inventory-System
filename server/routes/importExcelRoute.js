@@ -1,56 +1,97 @@
+// routes/importExcelRoute.js
+
 const express = require('express');
 const multer = require('multer');
-const XLSX = require('xlsx');
+const ExcelJS = require('exceljs');
 const fs = require('fs');
+const path = require('path');
 
 const router = express.Router();
+
+// Setup multer to upload files to 'uploads/' folder
 const upload = multer({ dest: 'uploads/' });
 
-// ✅ Simulated table schemas
-const VALID_TABLES = {
-  products: ['name', 'quantity', 'price', 'category'],
-  customers: ['first_name', 'last_name', 'email', 'phone']
-};
-
-router.post('/import-excel', upload.single('excel'), (req, res) => {
-  const table = req.body.table; // 🟡 Make sure frontend sends table name
-
-  if (!table || !VALID_TABLES[table]) {
-    return res.status(400).json({ error: 'Invalid or missing table name' });
-  }
-
+router.post('/import-excel', upload.single('excel'), async (req, res) => {
   try {
-    const workbook = XLSX.readFile(req.file.path);
-    const sheet = workbook.SheetNames[0];
-    const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheet]);
+    const filePath = req.file.path;
 
-    fs.unlinkSync(req.file.path); // delete temp file
+    // Load workbook from uploaded file
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(filePath);
+    const worksheet = workbook.worksheets[0];
 
-    if (!data.length) {
-      return res.status(400).json({ error: 'Excel file is empty' });
-    }
+    // Read header
+    const headers = worksheet.getRow(1).values.slice(1); // skip 0 index
+    const data = [];
 
-    // ✅ Validate headers
-    const headers = Object.keys(data[0]);
-    const expectedHeaders = VALID_TABLES[table];
-
-    const missing = expectedHeaders.filter(h => !headers.includes(h));
-    const extra = headers.filter(h => !expectedHeaders.includes(h));
-
-    if (missing.length || extra.length) {
-      return res.status(400).json({
-        error: `Column mismatch.\nMissing: ${missing.join(', ') || 'None'}\nExtra: ${extra.join(', ') || 'None'}`
+    // Extract rows
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return; // skip header
+      const rowData = {};
+      headers.forEach((header, index) => {
+        rowData[header] = row.getCell(index + 1).value;
       });
-    }
-
-    // ✅ All good, return data count only (DB insert skipped)
-    return res.status(200).json({
-      message: `✅ ${data.length} rows validated for table '${table}' (Ready to insert).`,
+      data.push(rowData);
     });
 
-  } catch (err) {
-    console.error('Excel Parse Error:', err);
-    res.status(500).json({ error: 'Error processing Excel file' });
+    // Validate data & add Status
+    const validatedData = data.map(row => {
+      const cost = row['cost per bag'];
+      const isValid = !isNaN(parseFloat(cost)) && isFinite(cost);
+      return {
+        ...row,
+        Status: isValid ? 'TRUE' : 'Error: cost should be any number',
+      };
+    });
+
+    // Create new workbook for output
+    const outputWorkbook = new ExcelJS.Workbook();
+    const outputSheet = outputWorkbook.addWorksheet('Validated');
+
+    // Add headers
+    outputSheet.columns = Object.keys(validatedData[0]).map(key => ({
+      header: key,
+      key: key,
+      width: 25,
+    }));
+
+    // Add rows with style
+    validatedData.forEach(row => {
+      const newRow = outputSheet.addRow(row);
+
+      const statusCell = newRow.getCell('Status');
+      if (row.Status === 'TRUE') {
+        statusCell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'C6EFCE' }, // light green
+        };
+        statusCell.font = { color: { argb: '006100' } }; // dark green
+      } else {
+        statusCell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFC7CE' }, // light red
+        };
+        statusCell.font = { color: { argb: '9C0006' } }; // dark red
+      }
+    });
+
+    // Save the new validated Excel file
+    const outputPath = path.join(__dirname, '../uploads/validated_output.xlsx');
+    await outputWorkbook.xlsx.writeFile(outputPath);
+
+    // Delete original uploaded file
+    fs.unlinkSync(filePath);
+
+    // Success response
+    res.json({ message: '✅ File validated with highlights!',
+    validatedData: validatedData
+     });
+
+  } catch (error) {
+    console.error('❌ Excel import error:', error);
+    res.status(500).json({ error: '❌ Failed to process Excel file' });
   }
 });
 

@@ -1,3 +1,5 @@
+// ✅ FileUpload.jsx (React Frontend Component)
+
 import React, { useState } from 'react';
 import axios from 'axios';
 
@@ -6,6 +8,7 @@ function FileUpload() {
   const [table, setTable] = useState('products');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [validatedData, setValidatedData] = useState([]);
 
   const handleUpload = async () => {
     if (!file || !table) {
@@ -23,6 +26,7 @@ function FileUpload() {
     try {
       const res = await axios.post('http://localhost:3002/import-excel', formData);
       setMessage(res.data.message);
+      setValidatedData(res.data.validatedData || []);
     } catch (err) {
       setMessage(err.response?.data?.error || '❌ Upload failed. Please try again.');
     } finally {
@@ -32,7 +36,7 @@ function FileUpload() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center px-4">
-      <div className="w-full max-w-lg bg-white shadow-2xl rounded-2xl p-8 space-y-6">
+      <div className="w-full max-w-3xl bg-white shadow-2xl rounded-2xl p-8 space-y-6">
         <h1 className="text-2xl font-bold text-gray-800 text-center">📊 Excel Import Panel</h1>
         <p className="text-sm text-gray-500 text-center">Upload Excel file to import data into the selected table.</p>
 
@@ -77,12 +81,55 @@ function FileUpload() {
         {message && (
           <div
             className={`text-center text-sm font-medium px-4 py-2 rounded-lg ${
-              message.includes('✅')
-                ? 'bg-green-100 text-green-800'
-                : 'bg-red-100 text-red-800'
+              message.includes('✅') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
             }`}
           >
             {message}
+          </div>
+        )}
+
+        {/* Validated Table */}
+        {validatedData.length > 0 && (
+          <div className="mt-6">
+            <h2 className="text-lg font-semibold mb-2">✅ Validated Data:</h2>
+            <div className="overflow-x-auto max-h-96 border rounded-lg">
+              <table className="min-w-full text-sm text-left border border-gray-300">
+                <thead className="bg-indigo-100 text-gray-700">
+                  <tr>
+                    {Object.keys(validatedData[0]).map((key, index) => (
+                      <th key={index} className="px-3 py-2 border">{key}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {validatedData.map((row, rowIndex) => (
+                    <tr key={rowIndex} className="border-t">
+                      {Object.values(row).map((value, colIndex) => (
+                        <td
+                          key={colIndex}
+                          className={`px-3 py-1 border ${
+                            row.Status === 'TRUE'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {value}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Download Button */}
+            <a
+              href="http://localhost:3002/download"
+              className="inline-block mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              download
+            >
+              ⬇ Download Validated Excel
+            </a>
           </div>
         )}
       </div>
