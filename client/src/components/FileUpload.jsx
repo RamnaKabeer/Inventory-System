@@ -1,5 +1,3 @@
-// ✅ FileUpload.jsx (React Frontend Component)
-
 import React, { useState } from 'react';
 import axios from 'axios';
 
@@ -27,6 +25,7 @@ function FileUpload() {
       const res = await axios.post('http://localhost:3002/import-excel', formData);
       setMessage(res.data.message);
       setValidatedData(res.data.validatedData || []);
+      console.log('✅ ValidatedData:', res.data.validatedData);
     } catch (err) {
       setMessage(err.response?.data?.error || '❌ Upload failed. Please try again.');
     } finally {
@@ -104,7 +103,7 @@ function FileUpload() {
                 <tbody>
                   {validatedData.map((row, rowIndex) => (
                     <tr key={rowIndex} className="border-t">
-                      {Object.values(row).map((value, colIndex) => (
+                      {Object.keys(validatedData[0]).map((key, colIndex) => (
                         <td
                           key={colIndex}
                           className={`px-3 py-1 border ${
@@ -113,7 +112,7 @@ function FileUpload() {
                               : 'bg-red-100 text-red-800'
                           }`}
                         >
-                          {value}
+                          {row[key]}
                         </td>
                       ))}
                     </tr>
