@@ -7,7 +7,7 @@ const db = mysql.createConnection({
   host: 'localhost',
   password: '',
   database: 'userdetails',
-  port: '3307',
+  port: '3306',
 });
 
 // ✅ Add promise support for async/await
