@@ -1,17 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import plantImage from '../assets/plants.png';
 import { ArrowLeft } from 'lucide-react';
 import googleIcon from '../assets/google.png';
 import appleIcon from '../assets/apple.png';
 import Axios from 'axios';
+import * as faceapi from 'face-api.js'; 
 
 const Login = () => {
   const [loginemail, setloginEmail] = useState('');
   const [loginpassword, setloginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [status, setStatus] = useState(''); // 🔹 for face login feedback
+  const [modelsLoaded, setModelsLoaded] = useState(false); // 🔹 check if models ready
+  const videoRef = useRef(); // 🔹 camera video ref
   const navigate = useNavigate();
 
+  // Load face-api models on mount
+  useEffect(() => {
+    async function loadModels() {
+      try {
+        await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+        await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+        await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+        setModelsLoaded(true);
+        console.log('✅ Face models loaded');
+      } catch (err) {
+        console.error('Model loading error:', err);
+      }
+    }
+    loadModels();
+  }, []);
+
+  // normal email/password login
   const loginUser = async (e) => {
     e.preventDefault();
     try {
@@ -23,12 +44,8 @@ const Login = () => {
       const data = response.data;
 
       if (data.token) {
-        // ✅ Save token to localStorage
         localStorage.setItem('token', data.token);
-
         console.log('✅ Token stored:', data.token);
-
-        // Clear form and navigate
         setloginEmail('');
         setloginPassword('');
         setLoginError('');
@@ -40,6 +57,52 @@ const Login = () => {
       setLoginError('Something went wrong. Try again.');
     }
   };
+
+  // 🔹 FACE LOGIN LOGIC BELOW
+
+  async function startCamera() {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    videoRef.current.srcObject = stream;
+  }
+
+  async function handleFaceLogin() {
+    try {
+      setStatus('📸 Opening camera...');
+      await startCamera();
+
+      const detection = await faceapi
+        .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+      if (!detection) {
+        setStatus('❌ No face detected! Try again.');
+        return;
+      }
+
+      const desc = Array.from(detection.descriptor);
+      setStatus('🔍 Verifying face...');
+
+      const res = await fetch('http://localhost:4000/api/face-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ face_encoding: desc }),
+      });
+
+      const data = await res.json();
+
+      if (data.matched) {
+        setStatus(`✅ Welcome ${data.username}`);
+        localStorage.setItem('user', JSON.stringify(data));
+        navigate('/dashboard');
+      } else {
+        setStatus('❌ Face not recognized.');
+      }
+    } catch (err) {
+      console.error(err);
+      setStatus('⚠️ Error: ' + err.message);
+    }
+  }
 
   useEffect(() => {
     if (loginError) {
@@ -53,7 +116,8 @@ const Login = () => {
       {/* Left Section */}
       <div className="w-full md:w-1/2 flex justify-center items-center bg-white px-6 py-8">
         <div className="w-full max-w-sm">
-          {/* Top Row */}
+
+          {/* Header */}
           <div className="relative mb-6 flex items-center justify-center">
             <button
               onClick={() => navigate(-1)}
@@ -77,6 +141,7 @@ const Login = () => {
             </div>
           )}
 
+          {/* Normal Login */}
           <label className="block font-bold text-sm text-gray-700 mb-1">
             Email address
           </label>
@@ -100,12 +165,6 @@ const Login = () => {
             className="w-full border rounded px-3 py-2 mb-3"
           />
 
-          <div className="flex items-center text-sm mb-4">
-            <label className="font-bold">
-              <input type="checkbox" className="mr-1" /> Remember for 30 days
-            </label>
-          </div>
-
           <button
             className="bg-green-700 text-white w-full py-2 rounded hover:bg-green-800 mb-3 font-bold"
             onClick={loginUser}
@@ -113,6 +172,28 @@ const Login = () => {
             Login
           </button>
 
+          {/* 🔹 FACE LOGIN SECTION */}
+          <div className="flex flex-col items-center mt-4 mb-3">
+            <p className="text-gray-600 font-bold mb-2">OR</p>
+            <button
+              onClick={handleFaceLogin}
+              disabled={!modelsLoaded}
+              className="bg-gray-800 text-white w-full py-2 rounded hover:bg-gray-900 font-bold"
+            >
+              Login with Face
+            </button>
+            <p className="text-sm mt-2 text-gray-600">{status}</p>
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              width={280}
+              height={180}
+              style={{ display: 'block', marginTop: '10px', borderRadius: '8px' }}
+            />
+          </div>
+
+          {/* Social Signup */}
           <div className="flex items-center my-3">
             <hr className="flex-grow border-gray-300" />
             <span className="px-3 text-gray-500 font-bold">or</span>
