@@ -1,3 +1,4 @@
+// ✅ Import dependencies
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
@@ -8,7 +9,6 @@ const path = require('path');
 require('dotenv').config();
 
 require('./backupScheduler');
-
 const db = require('./db');
 const importExcelRoute = require('./routes/importExcelRoute');
 
@@ -16,13 +16,14 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-const JWT_SECRET = process.env.JWT_SECRET;
+// ✅ JWT secret from .env
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
 
 // ✅ DB credentials for backup
 const DB_USER = 'root';
 const DB_PASSWORD = '';
 const DB_NAME = 'userdetails';
-const DB_PORT = '3307'; // Optional but used if needed
+const DB_PORT = '3307';
 
 // ✅ Create /backups folder if not exists
 const backupDir = path.join(__dirname, 'backups');
@@ -36,8 +37,7 @@ app.get('/backup', (req, res) => {
   const filePath = path.join(backupDir, `backup-${timestamp}.sql`);
   const dumpCommand = `mysqldump -u ${DB_USER} ${DB_PASSWORD ? `-p${DB_PASSWORD}` : ''} -P ${DB_PORT} ${DB_NAME} > "${filePath}"`;
 
-
-  exec(dumpCommand, (error, stdout, stderr) => {
+  exec(dumpCommand, (error) => {
     if (error) {
       console.error('❌ Backup error:', error);
       return res.status(500).json({ message: 'Backup failed', error });
@@ -47,17 +47,35 @@ app.get('/backup', (req, res) => {
   });
 });
 
-// ✅ Signup route
+// ✅ Signup route (with face encoding)
 app.post('/signup', async (req, res) => {
-  const { Email, Name, Password } = req.body;
+  const { Email, Name, Password, FaceEncoding } = req.body;
+
+  if (!Email || !Name || !Password) {
+    return res.status(400).send({ message: 'All fields are required' });
+  }
+
   try {
+    // Check if email already exists
+    const [existingUser] = await db.query('SELECT * FROM user_details WHERE email = ?', [Email]);
+    if (existingUser && existingUser.length > 0) {
+      return res.status(400).send({ message: 'Email already exists' });
+    }
+
     const hashedPassword = await bcrypt.hash(Password, 10);
-    const SQL = 'INSERT INTO users (email, name, password) VALUES (?, ?, ?)';
-    await db.query(SQL, [Email, Name, hashedPassword]);
-    res.send({ message: 'User added!' });
+
+    const SQL = `
+      INSERT INTO user_details (username, password_hash, role, email, face_encoding, created_at)
+      VALUES (?, ?, ?, ?, ?, NOW())
+    `;
+    const values = [Name, hashedPassword, 'user', Email, FaceEncoding || null];
+
+    await db.query(SQL, values);
+    console.log('✅ User added to database');
+    res.send({ message: 'User added successfully!' });
   } catch (err) {
-    console.error(err);
-    res.status(500).send({ error: 'Signup failed' });
+    console.error('❌ Signup error:', err);
+    res.status(500).send({ error: 'Signup failed', details: err });
   }
 });
 
@@ -65,27 +83,31 @@ app.post('/signup', async (req, res) => {
 app.post('/login', async (req, res) => {
   const { LoginEmail, LoginPassword } = req.body;
   try {
-    const SQL = 'SELECT * FROM users WHERE email = ?';
-    const users = await db.query(SQL, [LoginEmail]);
+    const [rows] = await db.query('SELECT * FROM user_details WHERE email = ?', [LoginEmail]);
+    const user = rows[0];
 
-    if (users.length === 0) {
+    if (!user) {
       return res.status(401).send({ message: 'User not found' });
     }
 
-    const isMatch = await bcrypt.compare(LoginPassword, users[0].password);
+    const isMatch = await bcrypt.compare(LoginPassword, user.password_hash);
     if (!isMatch) {
       return res.status(401).send({ message: 'Invalid password' });
     }
 
     const token = jwt.sign(
-      { userId: users[0].id, email: users[0].email },
+      { userId: user.user_id, email: user.email, role: user.role },
       JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '2h' }
     );
 
-    res.send({ message: 'Login successful', token });
+    res.send({
+      message: 'Login successful',
+      token,
+      user: { id: user.user_id, name: user.username, role: user.role },
+    });
   } catch (err) {
-    console.error(err);
+    console.error('❌ Login error:', err);
     res.status(500).send({ error: 'Login failed' });
   }
 });
